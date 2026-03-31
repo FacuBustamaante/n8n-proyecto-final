@@ -1,3 +1,9 @@
+## 📊 Prerequisitos
+### El proyecto necesita de tres componentes básicos que deben estar preinstalados.
+`ngrok`, `Docker` y `Docker Compose`.
+
+---
+
 ## 🚀 Guía de Inicio Rápido
 
 ### 1. Clonar y Organizar
