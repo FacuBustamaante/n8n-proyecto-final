@@ -1,0 +1,177 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT p.nombre, c.nombre AS categoria, p.stock_actual, p.stock_minimo, p.proveedor_email\nFROM productos p\nJOIN categorias c ON p.categoria_id = c.id\nWHERE p.stock_actual < p.stock_minimo;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        208,
+        0
+      ],
+      "id": "32339c74-c483-4c39-89c2-80dd7c022f0b",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "f5vKu04uSU0p71PA",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  const p = item.json;\n  // Creamos un mensaje amigable\n  item.json.mensaje_alerta = `⚠️ *ALERTA DE STOCK BAJO* ⚠️\\n\\n` +\n                             `*Producto:* ${p.nombre}\\n` +\n                             `*Categoría:* ${p.categoria}\\n` +\n                             `*Stock Actual:* ${p.stock_actual} (Mínimo: ${p.stock_minimo})\\n` +\n                             `*Proveedor:* ${p.proveedor_email}`;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "b6e3bf51-ea77-4e4b-b023-fd091e6bbe0b",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9319a109-e0bf-4c78-a861-296876450276",
+              "leftValue": "={{ $json.message.text }}",
+              "rightValue": "/analisis",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        16,
+        0
+      ],
+      "id": "bf2ac133-a297-4e07-ab91-6fa0f2b92f32",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "updates": "={{ [\"message\"] }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -176,
+        0
+      ],
+      "id": "27ae05a6-1ad3-4047-baa3-fceb698361d7",
+      "name": "Telegram Trigger",
+      "webhookId": "b023695e-a776-4d50-8677-ccd33629a57c",
+      "credentials": {
+        "telegramApi": {
+          "id": "bCfJcZiAsLnvTwka",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "1017650668",
+        "text": "={{ $json.mensaje_alerta }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "3eb0b9bd-9cef-4fef-b31b-7c546c76bb38",
+      "name": "Send a text message",
+      "webhookId": "7363e6ed-90ea-498a-8d93-48235be5eb09",
+      "credentials": {
+        "telegramApi": {
+          "id": "bCfJcZiAsLnvTwka",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "2825dfde-d3f4-403f-ae2c-3edf2181e1a2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fff15ffb97cf7e976844edf6a7f3f778d6679b57a4e5122b2e55ac2ee0415d21"
+  },
+  "id": "hfvEhLZcuRD06Fgf",
+  "tags": []
+}
