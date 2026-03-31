@@ -69,4 +69,4 @@ Username: n8n_user
 Password: n8n_password
 ```
 
-    3. Crear un workflow en blanco y con la opción**importar desde archivo** seleccionar el workflow.json que está en el repositorio.
+3. Crear un workflow en blanco y con la opción**importar desde archivo** seleccionar el workflow.json que está en el repositorio.
