@@ -34,8 +34,9 @@ CREATE TABLE usuarios_telegram (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO usuarios_telegram (telegram_id, first_name, last_name, created_at)
-VALUES (8688167579, 'Lucas', 'Russo', NOW());
+INSERT INTO usuarios_telegram (telegram_id, first_name, last_name, created_at) VALUES
+ (8688167579, 'Lucas', 'Russo', NOW()),
+ (1017650668, 'Facu', 'Bustamante', NOW());
 
 INSERT INTO categorias (nombre) VALUES ('Electrónica'), ('Hogar'), ('Libros');
 
