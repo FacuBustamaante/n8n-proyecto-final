@@ -12,6 +12,31 @@ CREATE TABLE productos (
     categoria_id INTEGER REFERENCES categorias(id),
     proveedor_email VARCHAR(100)
 );
+-- Movimiento de stock para el análisis
+CREATE TABLE movimientos_stock (
+    id SERIAL PRIMARY KEY,
+    producto_id INTEGER REFERENCES productos(id),
+
+    tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('entrada', 'salida')),
+    
+    cantidad INTEGER NOT NULL,
+    
+    motivo VARCHAR(50) NOT NULL CHECK (motivo IN ('venta', 'compra', 'ajuste')),
+    
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE usuarios_telegram (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    telegram_id BIGINT NOT NULL UNIQUE,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO usuarios_telegram (telegram_id, first_name, last_name, created_at) VALUES
+ (8688167579, 'Lucas', 'Russo', NOW()),
+ (1017650668, 'Facu', 'Bustamante', NOW());
 
 INSERT INTO categorias (nombre) VALUES ('Electrónica'), ('Hogar'), ('Libros');
 
@@ -41,3 +66,39 @@ INSERT INTO productos (nombre, stock_actual, stock_minimo, precio, categoria_id,
 ('Introducción a Algoritmos', 2, 4, 75.00, 3, 'edu_books@example.com'),
 ('Crónicas Marcianas', 1, 3, 28.00, 3, 'libros_clasicos@example.com'),
 ('Design Patterns (GoF)', 5, 8, 65.00, 3, 'editorial_dev@example.com');
+
+
+-- Insertar movimientos para testeo
+-- COMPRAS (entrada)
+INSERT INTO movimientos_stock (producto_id, tipo, cantidad, motivo, fecha) VALUES
+(4, 'entrada', 50, 'compra', NOW() - INTERVAL '30 days'),
+(4, 'entrada', 40, 'compra', NOW() - INTERVAL '20 days'),
+(4, 'entrada', 60, 'compra', NOW() - INTERVAL '10 days');
+
+-- VENTAS (salida)
+INSERT INTO movimientos_stock (producto_id, tipo, cantidad, motivo, fecha) VALUES
+(4, 'salida', 5, 'venta', NOW() - INTERVAL '29 days'),
+(4, 'salida', 3, 'venta', NOW() - INTERVAL '28 days'),
+(4, 'salida', 4, 'venta', NOW() - INTERVAL '27 days'),
+(4, 'salida', 6, 'venta', NOW() - INTERVAL '25 days'),
+(4, 'salida', 2, 'venta', NOW() - INTERVAL '24 days'),
+
+(4, 'salida', 7, 'venta', NOW() - INTERVAL '22 days'),
+(4, 'salida', 5, 'venta', NOW() - INTERVAL '21 days'),
+(4, 'salida', 6, 'venta', NOW() - INTERVAL '19 days'),
+(4, 'salida', 4, 'venta', NOW() - INTERVAL '18 days'),
+
+(4, 'salida', 8, 'venta', NOW() - INTERVAL '15 days'),
+(4, 'salida', 6, 'venta', NOW() - INTERVAL '14 days'),
+(4, 'salida', 7, 'venta', NOW() - INTERVAL '13 days'),
+
+(4, 'salida', 9, 'venta', NOW() - INTERVAL '9 days'),
+(4, 'salida', 6, 'venta', NOW() - INTERVAL '8 days'),
+(4, 'salida', 5, 'venta', NOW() - INTERVAL '7 days'),
+
+(4, 'salida', 10, 'venta', NOW() - INTERVAL '5 days'),
+(4, 'salida', 8, 'venta', NOW() - INTERVAL '4 days'),
+(4, 'salida', 7, 'venta', NOW() - INTERVAL '3 days'),
+
+(4, 'salida', 9, 'venta', NOW() - INTERVAL '2 days'),
+(4, 'salida', 6, 'venta', NOW() - INTERVAL '1 day');
