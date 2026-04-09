@@ -1,0 +1,707 @@
+{
+  "name": "Telegram Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  const p = item.json;\n  // Creamos un mensaje amigable\n  item.json.mensaje_alerta = `⚠️ *ALERTA DE STOCK BAJO* ⚠️\\n\\n` +\n                             `*Producto:* ${p.nombre}\\n` +\n                             `*Categoría:* ${p.categoria}\\n` +\n                             `*Stock Actual:* ${p.stock_actual} (Mínimo: ${p.stock_minimo})\\n` +\n                             `*Proveedor:* ${p.proveedor_email}`;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3216,
+        1200
+      ],
+      "id": "0a2e11af-c1f5-45a9-a92b-080a2c163873",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.data }}",
+        "options": {
+          "systemMessage": "Sos un asistente encargado de generar alertas de stock bajo para enviar por Telegram.\n\nVas a recibir un array de productos en formato JSON. Cada producto contiene información como:\n- nombre\n- stock_actual\n- stock_minimo (opcional)\n\nTu tarea es generar un mensaje claro, corto y profesional indicando qué productos tienen bajo stock.\n\n---\n\n⚠️ REGLAS:\n\n1. El mensaje debe estar en español.\n2. Debe ser claro y fácil de leer en Telegram.\n3. Usar emojis moderadamente (ej: ⚠️ 📦).\n4. Listar cada producto en una nueva línea.\n5. Mostrar:\n   - nombre del producto\n   - stock actual\n6. Si hay varios productos, agruparlos en una lista.\n7. Si no hay productos, indicar que no hay alertas.\n8. NO responder en JSON, responder en texto plano.\n9. Agrega SIEMPRE el día de hoy (Ejemplo: 08/04/2026)\n\n---\n\n🎯 FORMATO DE SALIDA:\n\nEjemplo:\n\n⚠️ Alerta de stock bajo:\n\n- Coca Cola 2L: 3 unidades disponibles\n- Fanta 1.5L: 2 unidades disponibles\n- Tornillos 8mm: 5 unidades disponibles\n\n---\n\nSi solo hay un producto:\n\n⚠️ Alerta de stock bajo:\n\n- Coca Cola 2L: 3 unidades disponibles\n\n---\n\nSi no hay productos:\n\n✅ No hay productos con stock bajo.\n\n---\n\nTu objetivo es generar mensajes útiles, claros y listos para enviar directamente por Telegram."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -592,
+        192
+      ],
+      "id": "50302786-3d2a-44e9-871e-45a57491fa53",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "content": "## Parking de Nodos",
+        "height": 384,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -3280,
+        960
+      ],
+      "id": "d1b38cb2-8540-41d8-ae85-8064629ffedf",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.telegram_id }}",
+        "text": "={{ $('AI Agent').item.json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        192
+      ],
+      "id": "2000f4fe-37e8-45f5-bbfc-993e6f9122c8",
+      "name": "Enviar Alertas",
+      "webhookId": "7363e6ed-90ea-498a-8d93-48235be5eb09",
+      "credentials": {
+        "telegramApi": {
+          "id": "Tmot8x01zG6zE4Kk",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## DB Aux\n\n",
+        "height": 416,
+        "width": 672,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -3280,
+        528
+      ],
+      "id": "49d41119-eb5a-4b5d-a741-23fa066f8add",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT table_name \nFROM information_schema.tables \nWHERE table_schema = 'public';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -3216,
+        592
+      ],
+      "id": "7ae9b934-7dfd-4a39-af20-a8d83ff5fa30",
+      "name": "Ver tablas Creadas",
+      "credentials": {
+        "postgres": {
+          "id": "olD2Fam6TuJfa5qO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE TABLE movimientos_stock (\n    id SERIAL PRIMARY KEY,\n    producto_id INTEGER REFERENCES productos(id),\n\n    tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('entrada', 'salida')),\n    \n    cantidad INTEGER NOT NULL,\n    \n    motivo VARCHAR(50) NOT NULL CHECK (motivo IN ('venta', 'compra', 'ajuste')),\n    \n    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -3216,
+        784
+      ],
+      "id": "bd7b750a-666b-4371-b5f4-4feff1d7bf1a",
+      "name": "Crear Tablas",
+      "credentials": {
+        "postgres": {
+          "id": "olD2Fam6TuJfa5qO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT *\nFROM productos\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -3024,
+        592
+      ],
+      "id": "0d94f3bd-0d43-4d00-9996-f76b3d76dfb1",
+      "name": "Ver Datos de Tabla",
+      "credentials": {
+        "postgres": {
+          "id": "olD2Fam6TuJfa5qO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "TRUNCATE table movimientos_stock",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -3024,
+        784
+      ],
+      "id": "3cc038d6-eb5c-4bd5-99f5-8e7ad7593b5d",
+      "name": "Truncar Tabla",
+      "credentials": {
+        "postgres": {
+          "id": "olD2Fam6TuJfa5qO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## StockApp - Workflow\n",
+        "height": 80,
+        "width": 1328,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1232,
+        -64
+      ],
+      "id": "8515963c-eaca-4fb9-bf10-642f7555aee9",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Recibir Mensaje de Usuario').item.json.message.chat.id }}",
+        "text": "Acceso rechazado",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -736,
+        992
+      ],
+      "id": "986658e1-4f16-4be6-88f7-634051070f8f",
+      "name": "Enviar Rechazo",
+      "webhookId": "f73cd892-fafb-4d45-9be4-31fb6ec1d8dd",
+      "credentials": {
+        "telegramApi": {
+          "id": "Tmot8x01zG6zE4Kk",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "db3bcb71-8d20-4e89-9904-43a485638aad",
+              "leftValue": "={{ $json.exists }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -736,
+        720
+      ],
+      "id": "5d41cfc2-7145-482e-9022-dc0d110c7b48",
+      "name": "Aceptar o Rechazar Interacción"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT EXISTS (\n    SELECT 1 \n    FROM usuarios_telegram\n    WHERE telegram_id = {{$json.message.from.id}}\n) AS exists,\n(\n        SELECT id \n        FROM usuarios_telegram \n        WHERE telegram_id = {{$json.message.from.id}}\n        LIMIT 1\n    ) AS user_id",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -960,
+        720
+      ],
+      "id": "f680b7c1-1537-42aa-8236-7f3a7abe1564",
+      "name": "Filtrar IDs Permitidos",
+      "credentials": {
+        "postgres": {
+          "id": "olD2Fam6TuJfa5qO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- COMPRAS (entrada)\nINSERT INTO movimientos_stock (producto_id, tipo, cantidad, motivo, fecha) VALUES\n(4, 'entrada', 50, 'compra', NOW() - INTERVAL '30 days'),\n(4, 'entrada', 40, 'compra', NOW() - INTERVAL '20 days'),\n(4, 'entrada', 60, 'compra', NOW() - INTERVAL '10 days');\n\n-- VENTAS (salida)\nINSERT INTO movimientos_stock (producto_id, tipo, cantidad, motivo, fecha) VALUES\n(4, 'salida', 5, 'venta', NOW() - INTERVAL '29 days'),\n(4, 'salida', 3, 'venta', NOW() - INTERVAL '28 days'),\n(4, 'salida', 4, 'venta', NOW() - INTERVAL '27 days'),\n(4, 'salida', 6, 'venta', NOW() - INTERVAL '25 days'),\n(4, 'salida', 2, 'venta', NOW() - INTERVAL '24 days'),\n\n(4, 'salida', 7, 'venta', NOW() - INTERVAL '22 days'),\n(4, 'salida', 5, 'venta', NOW() - INTERVAL '21 days'),\n(4, 'salida', 6, 'venta', NOW() - INTERVAL '19 days'),\n(4, 'salida', 4, 'venta', NOW() - INTERVAL '18 days'),\n\n(4, 'salida', 8, 'venta', NOW() - INTERVAL '15 days'),\n(4, 'salida', 6, 'venta', NOW() - INTERVAL '14 days'),\n(4, 'salida', 7, 'venta', NOW() - INTERVAL '13 days'),\n\n(4, 'salida', 9, 'venta', NOW() - INTERVAL '9 days'),\n(4, 'salida', 6, 'venta', NOW() - INTERVAL '8 days'),\n(4, 'salida', 5, 'venta', NOW() - INTERVAL '7 days'),\n\n(4, 'salida', 10, 'venta', NOW() - INTERVAL '5 days'),\n(4, 'salida', 8, 'venta', NOW() - INTERVAL '4 days'),\n(4, 'salida', 7, 'venta', NOW() - INTERVAL '3 days'),\n\n(4, 'salida', 9, 'venta', NOW() - INTERVAL '2 days'),\n(4, 'salida', 6, 'venta', NOW() - INTERVAL '1 day');",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2800,
+        592
+      ],
+      "id": "e980fd0d-18ab-4ab0-a920-15dd308689a4",
+      "name": "Insertar Datos",
+      "credentials": {
+        "postgres": {
+          "id": "olD2Fam6TuJfa5qO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT p.id, p.nombre, c.nombre AS categoria, p.stock_actual, p.stock_minimo, p.proveedor_email\nFROM productos p\nJOIN categorias c ON p.categoria_id = c.id\nWHERE p.stock_actual < p.stock_minimo \nAND c.nombre = 'Electrónica';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -992,
+        192
+      ],
+      "id": "b1c8e73b-ffa4-4391-93d9-c8ef674f75e9",
+      "name": "Filtrar Productos por Debajo del Stock Minimo",
+      "credentials": {
+        "postgres": {
+          "id": "olD2Fam6TuJfa5qO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "Select * from usuarios_telegram;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -240,
+        192
+      ],
+      "id": "a757d844-fe71-4784-86b6-f882fc903ef9",
+      "name": "Filtrar IDs Permitidos1",
+      "credentials": {
+        "postgres": {
+          "id": "olD2Fam6TuJfa5qO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -3216,
+        1040
+      ],
+      "id": "a9b79abb-75e3-4edb-b10d-8186ee96f1e1",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -816,
+        192
+      ],
+      "id": "65f644d2-c9e9-4b81-9086-cf97f751c8af",
+      "name": "Agrupar Datos "
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.4",
+          "mode": "list",
+          "cachedResultName": "gpt-5.4"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -592,
+        432
+      ],
+      "id": "7137650d-51b1-4b07-9b7b-43857c1f9283",
+      "name": "GPT-5.4",
+      "credentials": {
+        "openAiApi": {
+          "id": "tyLeU7PDgz9rGBwl",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.4",
+          "mode": "list",
+          "cachedResultName": "gpt-5.4"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -464,
+        928
+      ],
+      "id": "d7c47010-de54-44c1-b010-8d16b7bc8f7e",
+      "name": "GPT-5.4 2",
+      "credentials": {
+        "openAiApi": {
+          "id": "tyLeU7PDgz9rGBwl",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT p.id, p.nombre, c.nombre AS categoria, p.stock_actual, p.stock_minimo, p.proveedor_email\nFROM productos p\nJOIN categorias c ON p.categoria_id = c.id\nWHERE c.nombre = 'Electrónica';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        -288,
+        944
+      ],
+      "id": "03062905-64ec-45d8-9fe7-ff0042a9f7cc",
+      "name": "Execute a SQL query in Postgres",
+      "credentials": {
+        "postgres": {
+          "id": "olD2Fam6TuJfa5qO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Recibir Mensaje de Usuario').item.json.message.text }}",
+        "options": {
+          "systemMessage": "Sos un asistente encargado de responder consultas sobre el estado del stock de productos.\n\nEl usuario puede preguntar por uno o más productos.\n\nLa información SIEMPRE debe obtenerse desde la tool llamada \"Obtener Datos\".\n\n---\n\n⚠️ REGLAS CRÍTICAS:\n\n1. SOLO podés basarte en la información obtenida desde la tool \"Obtener Datos\".\n2. NO inventes productos ni valores.\n3. NO uses conocimiento previo.\n4. Si no hay datos disponibles desde la tool, indicarlo claramente.\n5. Si el usuario menciona productos, debés consultarlos en la tool antes de responder.\n\n---\n\n📦 FORMATO DE LOS DATOS (provenientes de la tool):\n\nRecibirás un array de productos en formato JSON con:\n- nombre\n- stock_actual\n- stock_minimo\n\n---\n\n🎯 TU TAREA:\n\nResponder al usuario indicando el estado del stock de cada producto consultado.\n\n---\n\n🧠 LÓGICA:\n\nPara cada producto:\n\n- Si stock_actual > stock_minimo:\n  → indicar que el stock es suficiente\n\n- Si stock_actual <= stock_minimo:\n  → indicar que el stock es bajo\n\n---\n\n🧾 REGLAS DE RESPUESTA:\n\n1. Responder en español.\n2. Usar un tono claro y profesional.\n3. Formato amigable para Telegram.\n4. Usar emojis moderadamente:\n   - ✅ stock suficiente\n   - ⚠️ stock bajo\n5. Mostrar:\n   - nombre del producto\n   - cantidad actual en stock\n6. Si hay varios productos, listarlos en líneas separadas.\n7. NO responder en JSON, solo texto.\n\n---\n\n📢 FORMATO DE SALIDA:\n\nEjemplo (stock suficiente):\n\n✅ Mouse inalámbrico: stock suficiente (15 unidades disponibles)\n\n---\n\nEjemplo (stock bajo):\n\n⚠️ Mouse inalámbrico: stock bajo (3 unidades disponibles)\n\n---\n\nEjemplo (múltiples productos):\n\nEstado de stock:\n\n✅ Teclado mecánico: stock suficiente (20 unidades disponibles)\n⚠️ Mouse inalámbrico: stock bajo (3 unidades disponibles)\n\n---\n\nSi no se encuentran productos:\n\n❌ No se encontraron datos para los productos consultados.\n\n---\n\nSi la tool falla:\n\n❌ No se pudieron obtener datos de stock en este momento.\n\n---\n\nTu objetivo es responder de forma clara, útil y precisa, basándote EXCLUSIVAMENTE en los datos obtenidos desde la tool \"Obtener Datos\"."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -464,
+        720
+      ],
+      "id": "515d9cd3-719d-47c3-b648-72dfda736cea",
+      "name": " Obtener Datos"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Recibir Mensaje de Usuario').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -112,
+        720
+      ],
+      "id": "f5481f4c-0ccf-496c-8ec6-d2d4ad9a757d",
+      "name": "Enviar Respuesta",
+      "webhookId": "7363e6ed-90ea-498a-8d93-48235be5eb09",
+      "credentials": {
+        "telegramApi": {
+          "id": "Tmot8x01zG6zE4Kk",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1216,
+        192
+      ],
+      "id": "f63c0e8d-6bf8-4ae8-8b29-34f5837a1e96",
+      "name": "Activar Workflow "
+    },
+    {
+      "parameters": {
+        "content": "## Checkeo Diario de stock + Alerta\n\n",
+        "height": 80,
+        "width": 1328,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1232,
+        48
+      ],
+      "id": "e390305f-ffd0-4fbd-bea5-1cbca43275c5",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "updates": "={{ [\"message\"] }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1200,
+        720
+      ],
+      "id": "b9c27b19-fcaa-4378-b070-5bd6f8abe2fc",
+      "name": "Recibir Mensaje de Usuario",
+      "webhookId": "b023695e-a776-4d50-8677-ccd33629a57c",
+      "credentials": {
+        "telegramApi": {
+          "id": "Tmot8x01zG6zE4Kk",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Checkeo Diario de stock + Alerta\n\n",
+        "height": 80,
+        "width": 1312,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1216,
+        592
+      ],
+      "id": "4a064138-78a0-4d90-bffb-143ea9d944a2",
+      "name": "Checkeo de Stock Manual"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code in JavaScript": {
+      "main": [
+        []
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Filtrar IDs Permitidos1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aceptar o Rechazar Interacción": {
+      "main": [
+        [
+          {
+            "node": " Obtener Datos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Rechazo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar IDs Permitidos": {
+      "main": [
+        [
+          {
+            "node": "Aceptar o Rechazar Interacción",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar Productos por Debajo del Stock Minimo": {
+      "main": [
+        [
+          {
+            "node": "Agrupar Datos ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar IDs Permitidos1": {
+      "main": [
+        [
+          {
+            "node": "Enviar Alertas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        []
+      ]
+    },
+    "Agrupar Datos ": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-5.4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-5.4 2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": " Obtener Datos",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query in Postgres": {
+      "ai_tool": [
+        [
+          {
+            "node": " Obtener Datos",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Obtener Datos": {
+      "main": [
+        [
+          {
+            "node": "Enviar Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Activar Workflow ": {
+      "main": [
+        [
+          {
+            "node": "Filtrar Productos por Debajo del Stock Minimo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recibir Mensaje de Usuario": {
+      "main": [
+        [
+          {
+            "node": "Filtrar IDs Permitidos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "70bd19f6-1cd2-466d-bb7d-49a6491c3499",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a8ebc455165031ee08edc3cd3382ca823b27be3a279e6cc6901d9551f450cc01"
+  },
+  "id": "qxONy9ooq0zBRZY0",
+  "tags": []
+}
